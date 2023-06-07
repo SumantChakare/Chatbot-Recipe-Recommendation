@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Recipe Recommendation Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+        }
+
+        .container {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .chat-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-bottom: 20px; /* Add some padding at the bottom to prevent the last message from being hidden */
+        }
+
+        .chat-item {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .chat-item.sent {
+            justify-content: flex-end;
+        }
+
+        .chat-item .message {
+            background-color: #DCF8C6;
+            border-radius: 10px;
+            padding: 10px;
+            display: inline-block;
+            max-width: 70%;
+        }
+
+        .chat-item.sent .message {
+            background-color: #DCF8C6;
+            align-self: flex-end;
+        }
+
+        .chat-item.received .message {
+            background-color: #FFFFFF;
+            align-self: flex-start;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            padding-top: 10px; /* Add some padding at the top to separate the input container from the message area */
+        }
+
+        .input-container input {
+            flex-grow: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .input-container button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: #FFFFFF;
+            font-size: 16px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Recipe Recommendation Chat</h1>
+        <div class="chat-container" id="chatContainer">
+            <div class="chat-item received">
+                <div class="message">
+                    Hello! How can I assist you today?
+                </div>
+            </div>
+        </div>
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Type your message...">
+            <button type="button" id="sendButton">Send</button>
+            <button type="button" id="voiceButton">Voice Input</button>
+        </div>
+    </div>
+
+    <script>
+        // Voice Input
+        const voiceButton = document.getElementById('voiceButton');
+        const userInput = document.getElementById('userInput');
+
+        const recognition = new webkitSpeechRecognition() || SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.continuous = false;
+
+        voiceButton.addEventListener('click', () => {
+            recognition.start();
+        });
+
+        recognition.onresult = (event) => {
+            const result = event.results[0][0].transcript;
+            userInput.value = result;
+        };
+
+        // Add your JavaScript code here
+        function scrollToBottom() {
+            var chatContainer = document.getElementById("chatContainer");
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function createChatItem(message, sender) {
+            var chatContainer = document.getElementById("chatContainer");
+            var chatItem = document.createElement("div");
+            chatItem.className = "chat-item " + sender;
+            var messageDiv = document.createElement("div");
+            messageDiv.className = "message";
+            messageDiv.innerHTML = message; // Use innerHTML to render HTML content
+            chatItem.appendChild(messageDiv);
+            chatContainer.appendChild(chatItem);
+            scrollToBottom();
+        }
+
+        function sendMessage() {
+            var message = userInput.value;
+            userInput.value = "";
+            createChatItem(message, "sent");
+
+            // AJAX request to the server
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    // Handle the response from the server
+                    var response = xhr.responseText;
+                    createChatItem(response, "received");
+                }
+            };
+            xhr.send("query=" + message);
+        }
+
+        // Attach the event listener to the send button
+        var sendButton = document.getElementById("sendButton");
+        sendButton.addEventListener("click", sendMessage);
+    </script>
+</body>
+</html>
